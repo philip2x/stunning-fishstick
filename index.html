@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智学AI · 智能学习平台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(145deg, #f1f5f9 0%, #e0e8f0 100%); min-height: 100vh; padding: 1.5rem; }
+        .app-container { max-width: 1300px; margin: 0 auto; background: rgba(255,255,255,0.92); border-radius: 2rem; box-shadow: 0 20px 35px -12px rgba(0,0,0,0.2); overflow: hidden; }
+        .navbar { background: #1e2f3f; padding: 1rem 2rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; }
+        .logo { display: flex; align-items: center; gap: 0.6rem; font-size: 1.5rem; font-weight: 700; color: white; background: #2c7da0; padding: 0.3rem 1rem; border-radius: 2rem; }
+        .nav-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .tab-btn { background: transparent; border: none; padding: 0.6rem 1.2rem; font-size: 0.95rem; font-weight: 600; border-radius: 2rem; color: #cbd5e1; cursor: pointer; transition: 0.2s; }
+        .tab-btn.active { background: #2c7da0; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+        .tab-btn:hover:not(.active) { background: #2c4a6e; color: #f1f5f9; }
+        .main-content { padding: 2rem; }
+        .tab-pane { display: none; animation: fade 0.2s ease; }
+        .tab-pane.active-pane { display: block; }
+        @keyframes fade { from { opacity: 0; transform: translateY(5px);} to { opacity: 1; transform: translateY(0);} }
+        .card { background: white; border-radius: 1.5rem; padding: 1.5rem; margin-bottom: 1.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e2edf2; }
+        .card-title { font-size: 1.4rem; font-weight: 700; color: #0f3b4f; margin-bottom: 1rem; border-left: 5px solid #2c7da0; padding-left: 0.8rem; }
+        .quiz-options { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+        .form-group label { font-weight: 600; font-size: 0.8rem; color: #2c5a74; }
+        select, input { padding: 0.5rem 1rem; border-radius: 2rem; border: 1px solid #cbdde9; background: white; font-size: 0.9rem; }
+        button { background: #2c7da0; border: none; color: white; padding: 0.5rem 1.2rem; border-radius: 2rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        button.secondary { background: #5f7f9c; }
+        .question-box { background: #f8fafc; border-radius: 1rem; padding: 1.2rem; margin-top: 1rem; border: 1px solid #dceaf5; }
+        .options-list { margin: 1rem 0; display: flex; flex-direction: column; gap: 0.6rem; }
+        .option-item { display: flex; align-items: center; gap: 0.8rem; background: #ffffff; padding: 0.5rem 1rem; border-radius: 2rem; border: 1px solid #e2edf2; cursor: pointer; }
+        .mistake-item { background: #fff6e5; border-left: 4px solid #e67e22; padding: 1rem; margin-bottom: 1rem; border-radius: 1rem; }
+        .chat-container { background: #f7fafd; border-radius: 1rem; padding: 1rem; height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.8rem; border: 1px solid #cbdde9; }
+        .chat-bubble { max-width: 80%; padding: 0.7rem 1rem; border-radius: 1.2rem; line-height: 1.4; }
+        .user-msg { background: #2c7da0; color: white; align-self: flex-end; border-bottom-right-radius: 0.2rem; }
+        .ai-msg { background: #e9eef3; color: #1f3b4a; align-self: flex-start; border-bottom-left-radius: 0.2rem; }
+        .chat-input-area { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        .chat-input-area input { flex: 1; }
+        .loading { opacity: 0.6; pointer-events: none; }
+        @media (max-width: 700px) { .main-content { padding: 1rem; } .navbar { flex-direction: column; align-items: stretch; } .quiz-options { flex-direction: column; } }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="navbar">
+        <div class="logo"><span>🧠</span> 智学AI · 自适应学习</div>
+        <div class="nav-tabs">
+            <button class="tab-btn active" data-tab="quiz">📝 智能出题</button>
+            <button class="tab-btn" data-tab="mistake">❌ 错题分析</button>
+            <button class="tab-btn" data-tab="roadmap">🗺️ 学习路线</button>
+            <button class="tab-btn" data-tab="assistant">🤖 AI助教</button>
+        </div>
+    </div>
+    <div class="main-content">
+        <!-- 出题面板 -->
+        <div id="quizPanel" class="tab-pane active-pane">
+            <div class="card">
+                <div class="card-title">✨ 智能出题 · 按需生成</div>
+                <div class="quiz-options">
+    <div class="form-group">
+        <label>📚 选择科目</label>
+        <select id="subjectSelect">
+            <optgroup label="📐 理工科">
+                <option value="高等数学">高等数学（微积分）</option>
+                <option value="大学物理">大学物理（力学/电磁学）</option>
+                <option value="工程力学">工程力学（静力学/动力学）</option>
+                <option value="线性代数">线性代数</option>
+                <option value="概率论">概率论与数理统计</option>
+            </optgroup>
+            <optgroup label="💻 编程语言">
+                <option value="Python编程">Python编程</option>
+                <option value="数据结构">数据结构与算法</option>
+            </optgroup>
+            <optgroup label="📖 语言类">
+                <option value="大学英语">大学英语（四六级）</option>
+            </optgroup>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>⚡ 难度</label>
+        <select id="difficultySelect">
+            <option value="简单">简单（基础概念）</option>
+            <option value="中等" selected>中等（综合应用）</option>
+            <option value="困难">困难（拓展提高）</option>
+        </select>
+    </div>
+    <button id="generateQuizBtn">🎲 AI智能出题</button>
+</div>
+                <div id="quizArea"><div class="question-box" style="text-align:center;">点击生成题目，AI将实时创作~</div></div>
+            </div>
+        </div>
+        <!-- 错题分析面板 -->
+        <div id="mistakePanel" class="tab-pane">
+            <div class="card">
+                <div class="card-title">📖 错题本 & 智能分析</div>
+                <div id="mistakeListContainer"><p>暂无错题</p></div>
+                <button id="analyzeMistakesBtn" class="secondary" style="margin-top:1rem;">🔍 AI分析薄弱点</button>
+                <div id="mistakeAnalysisResult" style="margin-top:1rem; background:#f4f9fe; border-radius:1rem; padding:1rem;"></div>
+            </div>
+        </div>
+        <!-- 学习路线面板 -->
+        <div id="roadmapPanel" class="tab-pane">
+            <div class="card">
+                <div class="card-title">🧭 个性化学习路线推荐</div>
+                <button id="refreshRoadmapBtn" style="margin:1rem 0;">✨ 生成/刷新路线</button>
+                <div id="roadmapDisplay"></div>
+            </div>
+        </div>
+        <!-- AI助教面板 -->
+        <div id="assistantPanel" class="tab-pane">
+            <div class="card">
+                <div class="card-title">🤖 AI助教 · 随时提问</div>
+                <div class="chat-container" id="chatMessages"><div class="chat-bubble ai-msg">👋 你好！我是AI学习助手，可以解答编程疑问、学习规划、解题思路~</div></div>
+                <div class="chat-input-area"><input type="text" id="chatInput" placeholder="输入你的问题..."><button id="sendChatBtn">发送</button></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // ---------- 数据模型 ----------
+    let currentQuestion = null;
+    let mistakeList = [];
+    let quizHistory = [];
+
+    function loadData() {
+        const storedMistakes = localStorage.getItem('learn_mistakes');
+        if(storedMistakes) mistakeList = JSON.parse(storedMistakes);
+        const storedHistory = localStorage.getItem('quiz_history');
+        if(storedHistory) quizHistory = JSON.parse(storedHistory);
+    }
+    function saveMistakes() { localStorage.setItem('learn_mistakes', JSON.stringify(mistakeList)); }
+    function saveHistory() { localStorage.setItem('quiz_history', JSON.stringify(quizHistory)); }
+
+    // 辅助：显示loading状态
+    function setLoading(buttonId, isLoading) {
+        const btn = document.getElementById(buttonId);
+        if(btn) {
+            if(isLoading) { btn.classList.add('loading'); btn.disabled = true; btn.textContent = '⏳ 处理中...'; }
+            else { btn.classList.remove('loading'); btn.disabled = false; btn.textContent = btn.getAttribute('data-original') || btn.textContent; }
+        }
+    }
+
+    // 智能出题（调用后端）
+    async function generateNewQuestion() {
+        const subject = document.getElementById('subjectSelect').value;
+        const difficulty = document.getElementById('difficultySelect').value;
+        const generateBtn = document.getElementById('generateQuizBtn');
+        setLoading('generateQuizBtn', true);
+        try {
+            const response = await fetch('/api/generate-question', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subject, difficulty })
+            });
+            const question = await response.json();
+            if(question.error) throw new Error(question.error);
+            currentQuestion = question;
+            renderCurrentQuestion();
+        } catch(err) {
+            alert('生成题目失败：' + err.message);
+        } finally {
+            setLoading('generateQuizBtn', false);
+        }
+    }
+
+    function renderCurrentQuestion() {
+        const quizArea = document.getElementById('quizArea');
+        if(!currentQuestion) { quizArea.innerHTML = `<div class="question-box">点击生成题目</div>`; return; }
+        const q = currentQuestion;
+        let html = `<div class="question-box"><strong>📌 ${q.subject} · ${q.difficulty}</strong><p style="margin:0.8rem 0;">${q.text}</p><div class="options-list" id="optionsList">`;
+        q.options.forEach(opt => { html += `<div class="option-item" data-opt="${opt.replace(/"/g, '&quot;')}">🔘 ${opt}</div>`; });
+        html += `</div><div class="feedback" id="quizFeedback"></div><button id="submitAnswerBtn" class="secondary">📥 提交答案</button></div>`;
+        quizArea.innerHTML = html;
+        document.querySelectorAll('.option-item').forEach(el => {
+            el.addEventListener('click', () => {
+                document.querySelectorAll('.option-item').forEach(opt => opt.style.background = '#ffffff');
+                el.style.background = '#d9eefb';
+                el.setAttribute('data-selected', 'true');
+            });
+        });
+        document.getElementById('submitAnswerBtn')?.addEventListener('click', () => {
+            const selectedDiv = document.querySelector('.option-item[data-selected="true"]');
+            if(!selectedDiv) { document.getElementById('quizFeedback').innerHTML = '<span style="color:#c0392b;">请选择答案！</span>'; return; }
+            let userAnswer = selectedDiv.getAttribute('data-opt');
+            const isCorrect = (userAnswer === q.answer);
+            const feedbackDiv = document.getElementById('quizFeedback');
+            if(isCorrect) {
+                feedbackDiv.innerHTML = `<span style="color:#2e7d32;">✅ 正确！ ${q.explanation}</span>`;
+                quizHistory.push({ id: q.id, subject: q.subject, correct: true, timestamp: Date.now() });
+            } else {
+                feedbackDiv.innerHTML = `<span style="color:#c0392b;">❌ 错误！正确答案：${q.answer}。解析：${q.explanation}</span>`;
+                if(!mistakeList.find(m => m.id === q.id)) {
+                    mistakeList.push({ id: q.id, subject: q.subject, question: q.text, userAnswer, correctAnswer: q.answer, explanation: q.explanation, difficulty: q.difficulty, timestamp: Date.now() });
+                    saveMistakes();
+                }
+                quizHistory.push({ id: q.id, subject: q.subject, correct: false, timestamp: Date.now() });
+            }
+            saveHistory();
+            if(document.getElementById('mistakePanel').classList.contains('active-pane')) renderMistakeList();
+        });
+    }
+
+    async function renderMistakeList() {
+        const container = document.getElementById('mistakeListContainer');
+        if(!mistakeList.length) { container.innerHTML = '<p>✨ 暂无错题，继续学习~</p>'; return; }
+        let html = '';
+        mistakeList.forEach(m => { html += `<div class="mistake-item"><strong>❌ ${m.subject} · ${m.difficulty}</strong><br><strong>题目：</strong>${m.question}<br><strong>你的答案：</strong>${m.userAnswer} &nbsp;|&nbsp; <strong>正确答案：</strong>${m.correctAnswer}<br><strong>解析：</strong>${m.explanation}<br><small>${new Date(m.timestamp).toLocaleString()}</small></div>`; });
+        container.innerHTML = html;
+    }
+
+    async function analyzeMistakes() {
+        const btn = document.getElementById('analyzeMistakesBtn');
+        setLoading('analyzeMistakesBtn', true);
+        try {
+            const response = await fetch('/api/analyze-mistakes', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mistakes: mistakeList })
+            });
+            const data = await response.json();
+            document.getElementById('mistakeAnalysisResult').innerHTML = `<div style="background:#eef3fc;padding:0.8rem;border-radius:1rem;">${data.analysis || data.error}</div>`;
+        } catch(err) {
+            document.getElementById('mistakeAnalysisResult').innerHTML = '分析失败';
+        } finally {
+            setLoading('analyzeMistakesBtn', false);
+        }
+    }
+
+    async function generateRoadmap() {
+        const btn = document.getElementById('refreshRoadmapBtn');
+        setLoading('refreshRoadmapBtn', true);
+        try {
+            const response = await fetch('/api/roadmap', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quizHistory, mistakes: mistakeList })
+            });
+            const data = await response.json();
+            document.getElementById('roadmapDisplay').innerHTML = data.roadmapHtml || '生成失败';
+        } catch(err) {
+            document.getElementById('roadmapDisplay').innerHTML = '路线生成失败';
+        } finally {
+            setLoading('refreshRoadmapBtn', false);
+        }
+    }
+
+    // AI助教
+    async function sendChat() {
+        const input = document.getElementById('chatInput');
+        const msg = input.value.trim();
+        if(!msg) return;
+        addChatMessage(msg, true);
+        input.value = '';
+        const sendBtn = document.getElementById('sendChatBtn');
+        setLoading('sendChatBtn', true);
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: msg })
+            });
+            const data = await response.json();
+            addChatMessage(data.reply, false);
+        } catch(err) {
+            addChatMessage('AI服务暂时不可用，请稍后再试。', false);
+        } finally {
+            setLoading('sendChatBtn', false);
+        }
+    }
+
+    function addChatMessage(text, isUser) {
+        const container = document.getElementById('chatMessages');
+        const bubble = document.createElement('div');
+        bubble.className = `chat-bubble ${isUser ? 'user-msg' : 'ai-msg'}`;
+        bubble.innerHTML = isUser ? `🧑‍💻 ${text}` : `🤖 ${text}`;
+        container.appendChild(bubble);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // 选项卡切换
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active-pane'));
+        document.getElementById(`${tabId}Panel`).classList.add('active-pane');
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+        if(tabId === 'mistake') renderMistakeList();
+        if(tabId === 'roadmap') generateRoadmap();
+    }
+
+    function init() {
+        loadData();
+        document.getElementById('generateQuizBtn').addEventListener('click', generateNewQuestion);
+        document.getElementById('analyzeMistakesBtn').addEventListener('click', analyzeMistakes);
+        document.getElementById('refreshRoadmapBtn').addEventListener('click', generateRoadmap);
+        document.getElementById('sendChatBtn').addEventListener('click', sendChat);
+        document.getElementById('chatInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendChat(); });
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', (e) => switchTab(btn.getAttribute('data-tab'))));
+        renderMistakeList();
+        generateRoadmap();
+        switchTab('quiz');
+        // 保存按钮原始文字
+        document.querySelectorAll('button').forEach(btn => { if(btn.id) btn.setAttribute('data-original', btn.textContent); });
+    }
+    init();
+</script>
+</body>
+</html>
